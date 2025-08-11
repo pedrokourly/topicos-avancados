@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1",
+    "socketio": "^1.0.0"
+  },
+  "name": "topicos-avancados",
+  "version": "1.0.0",
+  "description": "Repositório da ementa de Tópicos Avançados de Computação do Instituto Federal do Triângulo Mineiro, Ministrado pelo discente André Luiz",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pedrokourly/topicos-avancados.git"
+  },
+  "author": "Pedro Kourly",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pedrokourly/topicos-avancados/issues"
+  },
+  "homepage": "https://github.com/pedrokourly/topicos-avancados#readme"
+}
