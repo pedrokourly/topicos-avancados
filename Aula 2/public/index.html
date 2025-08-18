@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+</head>
+<body>
+    <h2>Chat com rooms</h2>
+
+    <input type="text" id="sala" placeholder="Digite o nome da sala">
+    <button onclick="entrarSala()">Entrar na sala</button>
+
+    <input type="text" id="msg" placeholder="Digite sua mensagem">
+    <button onclick="enviarMsg()">Enviar mensagem</button>
+
+    <ul id="chat"></ul>
+    <script>
+        const socket = io('http://localhost:3000');
+        let salaAtual = null;
+
+        function entrarSala(){
+            salaAtual = document.getElementById('sala').value.trim();
+            if(salaAtual) {
+                socket.emit('entrarSala', salaAtual);
+                adicionarMensagem(`Você entrou na sala: ${salaAtual}`);
+            } else {
+                alert('Por favor, digite o nome da sala.');
+            }
+        }   
+        
+        function enviarMsg(){
+            const msg = document.getElementById('msg').value.trim();
+            if(msg && salaAtual) {
+                socket.emit('mensagemSala', { sala: salaAtual, mensagem: msg });
+                document.getElementById('msg').value = '';
+            } else {
+                alert('Por favor, digite uma mensagem e entre em uma sala.');
+            }
+        }
+
+        function adicionarMensagem(msg) {
+            const chat = document.getElementById('chat');
+            const li = document.createElement('li');
+            li.textContent = msg;
+            chat.appendChild(li);
+        }
+
+        socket.on('mensagem',(msg) =>{
+            adicionarMensagem(msg);
+        })
+        </script>
+</body>
+</html>
