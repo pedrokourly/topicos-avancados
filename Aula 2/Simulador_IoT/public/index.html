@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard IoT - Monitoramento de Sensores</title>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce 2s infinite',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen text-white">
+    <!-- Header -->
+    <header class="bg-black/20 backdrop-blur-sm border-b border-purple-500/30 p-6">
+        <div class="container mx-auto">
+            <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 flex items-center gap-3">
+                <i class="fas fa-satellite-dish animate-pulse-slow"></i>
+                Dashboard IoT - Monitoramento de Sensores
+            </h1>
+            <p class="text-gray-300 mt-2">Dados em tempo real dos sensores ambientais e de combustível</p>
+            <div class="flex items-center gap-2 mt-3">
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-sm text-green-400">Online - Atualizando a cada 2 segundos</span>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto p-6">
+        <!-- Cards de Dados -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Card Temperatura -->
+            <div class="bg-gradient-to-br from-red-500/20 to-orange-600/20 backdrop-blur-sm border border-red-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-red-500/30 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-thermometer-half text-xl text-red-400"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-300">Temperatura</p>
+                        <p id="temperatura" class="text-2xl font-bold text-red-400">-- °C</p>
+                    </div>
+                </div>
+                <div class="w-full bg-red-900/30 rounded-full h-2">
+                    <div id="temp-bar" class="bg-gradient-to-r from-red-500 to-orange-500 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Card Umidade -->
+            <div class="bg-gradient-to-br from-blue-500/20 to-cyan-600/20 backdrop-blur-sm border border-blue-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-blue-500/30 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-tint text-xl text-blue-400"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-300">Umidade</p>
+                        <p id="umidade" class="text-2xl font-bold text-blue-400">-- %</p>
+                    </div>
+                </div>
+                <div class="w-full bg-blue-900/30 rounded-full h-2">
+                    <div id="umid-bar" class="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Card Velocidade do Vento -->
+            <div class="bg-gradient-to-br from-green-500/20 to-emerald-600/20 backdrop-blur-sm border border-green-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-green-500/30 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-wind text-xl text-green-400"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-300">Velocidade do Vento</p>
+                        <p id="velocidade" class="text-2xl font-bold text-green-400">-- m/s</p>
+                    </div>
+                </div>
+                <div class="w-full bg-green-900/30 rounded-full h-2">
+                    <div id="vel-bar" class="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Card Combustível -->
+            <div class="bg-gradient-to-br from-yellow-500/20 to-amber-600/20 backdrop-blur-sm border border-yellow-500/30 rounded-xl p-6 hover:scale-105 transition-transform duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-yellow-500/30 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-gas-pump text-xl text-yellow-400"></i>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-300">Nível de Combustível</p>
+                        <p id="combustivel" class="text-2xl font-bold text-yellow-400">-- %</p>
+                    </div>
+                </div>
+                <div class="w-full bg-yellow-900/30 rounded-full h-2">
+                    <div id="comb-bar" class="bg-gradient-to-r from-yellow-500 to-amber-500 h-2 rounded-full transition-all duration-1000" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- Gráfico de Linha - Histórico -->
+            <div class="bg-black/30 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
+                <h3 class="text-xl font-semibold mb-4 text-purple-300 flex items-center gap-2">
+                    <i class="fas fa-chart-line"></i>
+                    Histórico dos Sensores
+                </h3>
+                <div class="relative h-64">
+                    <canvas id="lineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráfico de Rosca - Distribuição Atual -->
+            <div class="bg-black/30 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
+                <h3 class="text-xl font-semibold mb-4 text-purple-300 flex items-center gap-2">
+                    <i class="fas fa-chart-pie"></i>
+                    Distribuição Atual
+                </h3>
+                <div class="relative h-64">
+                    <canvas id="doughnutChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status e Alertas -->
+        <div class="mt-6 bg-black/30 backdrop-blur-sm border border-purple-500/30 rounded-xl p-6">
+            <h3 class="text-xl font-semibold mb-4 text-purple-300 flex items-center gap-2">
+                <i class="fas fa-exclamation-triangle"></i>
+                Status e Alertas
+            </h3>
+            <div id="alerts" class="space-y-2">
+                <!-- Alertas serão inseridos aqui dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:3000');
+        
+        // Dados para os gráficos
+        const historicData = {
+            labels: [],
+            temperatura: [],
+            umidade: [],
+            velocidade: [],
+            combustivel: []
+        };
+
+        // Configuração do gráfico de linha
+        const lineCtx = document.getElementById('lineChart').getContext('2d');
+        const lineChart = new Chart(lineCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Temperatura (°C)',
+                        data: [],
+                        borderColor: 'rgb(239, 68, 68)',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Umidade (%)',
+                        data: [],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Velocidade (m/s)',
+                        data: [],
+                        borderColor: 'rgb(16, 185, 129)',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'Combustível (%)',
+                        data: [],
+                        borderColor: 'rgb(245, 158, 11)',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Configuração do gráfico de rosca
+        const doughnutCtx = document.getElementById('doughnutChart').getContext('2d');
+        const doughnutChart = new Chart(doughnutCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Temperatura', 'Umidade', 'Velocidade', 'Combustível'],
+                datasets: [{
+                    data: [0, 0, 0, 0],
+                    backgroundColor: [
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 158, 11, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgb(239, 68, 68)',
+                        'rgb(59, 130, 246)',
+                        'rgb(16, 185, 129)',
+                        'rgb(245, 158, 11)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Função para gerar alertas
+        function checkAlerts(data) {
+            const alertsContainer = document.getElementById('alerts');
+            alertsContainer.innerHTML = '';
+
+            const alerts = [];
+            
+            if (parseFloat(data.temperatura) > 30) {
+                alerts.push({
+                    type: 'warning',
+                    icon: 'fas fa-thermometer-full',
+                    message: 'Temperatura alta detectada!',
+                    color: 'text-red-400 border-red-500/50'
+                });
+            }
+            
+            if (parseFloat(data.umidade) < 30) {
+                alerts.push({
+                    type: 'info',
+                    icon: 'fas fa-exclamation-circle',
+                    message: 'Umidade baixa - considere umidificar o ambiente',
+                    color: 'text-blue-400 border-blue-500/50'
+                });
+            }
+            
+            if (parseFloat(data.velocidade) > 80) {
+                alerts.push({
+                    type: 'warning',
+                    icon: 'fas fa-wind',
+                    message: 'Ventos fortes detectados!',
+                    color: 'text-green-400 border-green-500/50'
+                });
+            }
+            
+            if (parseFloat(data.combustivel) < 20) {
+                alerts.push({
+                    type: 'danger',
+                    icon: 'fas fa-gas-pump',
+                    message: 'Nível de combustível baixo - reabasteça em breve',
+                    color: 'text-yellow-400 border-yellow-500/50'
+                });
+            }
+
+            if (alerts.length === 0) {
+                alertsContainer.innerHTML = `
+                    <div class="flex items-center gap-3 p-3 bg-green-500/20 border border-green-500/50 rounded-lg">
+                        <i class="fas fa-check-circle text-green-400"></i>
+                        <span class="text-green-400">Todos os sensores estão operando normalmente</span>
+                    </div>
+                `;
+            } else {
+                alerts.forEach(alert => {
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = `flex items-center gap-3 p-3 bg-black/20 border rounded-lg ${alert.color}`;
+                    alertDiv.innerHTML = `
+                        <i class="${alert.icon}"></i>
+                        <span>${alert.message}</span>
+                    `;
+                    alertsContainer.appendChild(alertDiv);
+                });
+            }
+        }
+
+        // Recebendo dados do servidor
+        socket.on('dadosSensor', (data) => {
+            console.table(data);
+            
+            // Atualizando os cards
+            document.getElementById('temperatura').innerText = `${data.temperatura} °C`;
+            document.getElementById('umidade').innerText = `${data.umidade} %`;
+            document.getElementById('velocidade').innerText = `${data.velocidade} m/s`;
+            document.getElementById('combustivel').innerText = `${data.combustivel} %`;
+
+            // Atualizando as barras de progresso
+            document.getElementById('temp-bar').style.width = `${(parseFloat(data.temperatura) / 35) * 100}%`;
+            document.getElementById('umid-bar').style.width = `${data.umidade}%`;
+            document.getElementById('vel-bar').style.width = `${(parseFloat(data.velocidade) / 120) * 100}%`;
+            document.getElementById('comb-bar').style.width = `${data.combustivel}%`;
+
+            // Adicionando dados ao histórico
+            const now = new Date().toLocaleTimeString();
+            historicData.labels.push(now);
+            historicData.temperatura.push(parseFloat(data.temperatura));
+            historicData.umidade.push(parseFloat(data.umidade));
+            historicData.velocidade.push(parseFloat(data.velocidade));
+            historicData.combustivel.push(parseFloat(data.combustivel));
+
+            // Limitando o histórico a 20 pontos
+            if (historicData.labels.length > 20) {
+                historicData.labels.shift();
+                historicData.temperatura.shift();
+                historicData.umidade.shift();
+                historicData.velocidade.shift();
+                historicData.combustivel.shift();
+            }
+
+            // Atualizando gráfico de linha
+            lineChart.data.labels = historicData.labels;
+            lineChart.data.datasets[0].data = historicData.temperatura;
+            lineChart.data.datasets[1].data = historicData.umidade;
+            lineChart.data.datasets[2].data = historicData.velocidade;
+            lineChart.data.datasets[3].data = historicData.combustivel;
+            lineChart.update('none');
+
+            // Atualizando gráfico de rosca com valores normalizados
+            doughnutChart.data.datasets[0].data = [
+                parseFloat(data.temperatura),
+                parseFloat(data.umidade),
+                parseFloat(data.velocidade),
+                parseFloat(data.combustivel)
+            ];
+            doughnutChart.update('none');
+
+            // Verificando alertas
+            checkAlerts(data);
+        });
+    </script>
+</body>
+</html>

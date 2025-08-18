@@ -1,0 +1,16 @@
+{
+  "name": "simulador_iot",
+  "version": "1.0.0",
+  "description": "Aula 2 - Simulador IoT",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "Pedro Kourly",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  }
+}
